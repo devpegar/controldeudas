@@ -93,7 +93,7 @@ class Mainapp:
         self.editBalance = tk.Entry(frame, width = 10)
         self.editBalance.grid(row = 3, column = 1, padx = 5, pady = 5, sticky = 'w')
 
-        tk.Button(self.editCard, text = 'Aceptar', width = 15, height = 3, command = self.add_cCards).place(x = 340, y = 10)
+        tk.Button(self.editCard, text = 'Actualizar', width = 15, height = 3, command = self.update_cCard).place(x = 340, y = 10)
         tk.Button(self.editCard, text = 'Cancelar', width = 15, height = 3, command = self.editCard.destroy).place(x = 340, y = 80)
 
         selItem = self.selectedItem()
@@ -118,21 +118,19 @@ class Mainapp:
         for elements in records:
             self.tree.delete(elements)
         
-        query = 'SELECT * FROM creditcards ORDER BY id DESC'
-        db_rows = fn.run_query(query)
-        
-        
+        db_rows = fn.run_query(fn.selectDB('creditcards'))
+
         for row in db_rows:
-        
+
             self.tree.insert('', 0, text = row[0], values = row[1:])
 
     def add_cCards(self):
         if self.validar():
-            query = 'INSERT INTO creditcards VALUES(NULL, ?, ?, ?, ?)'
+            # query = 'INSERT INTO creditcards VALUES(NULL, ?, ?, ?, ?)'
             if fn.validateDate(self.addDeadline.get()):
                 if fn.validateDate(self.addDueDate.get()):
                     parameters = (self.addName.get(), self.addDeadline.get(), self.addDueDate.get(), self.addBalance.get())
-                    fn.run_query(query, parameters)
+                    fn.run_query(fn.insertDB(creditcards, 4), parameters)
                     messagebox.showinfo(title = 'Exito', message = 'Tarjeta agregada con éxito', parent = self.addCard)
                     self.addCard.destroy()
                     self.get_cCards()
@@ -140,9 +138,15 @@ class Mainapp:
                     messagebox.showerror(title = 'Error', message = 'Formato de fecha no admitido. Solo admite aaaa-mm-dd', parent = self.addCard)
             else:
                 messagebox.showerror(title = 'Error', message = 'Formato de fecha no admitido. Solo admite aaaa-mm-dd', parent = self.addCard)
-                
+    
+    def update_cCard(self):
+        iid = self.selectedItem()['text']
+        col = ['name', 'deadline', 'duedate', 'balance']
+        query = fn.updateBD('creditcards', iid, col)
+        parameters = (self.editName.get(), self.editDeadline.get(), self.editDueDate.get(), self.editBalance.get(), iid)
+        fn.run_query(query, parameters)
 
-
+    
     def validar(self):
         return len(self.addName.get()) !=0 and len(self.addDeadline.get()) !=0 and len(self.addDueDate.get()) !=0
 
