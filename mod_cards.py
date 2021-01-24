@@ -72,10 +72,17 @@ class CreditCards(tk.Frame):
         for elements in records:
             self.tree.delete(elements)
         
-        db_rows = fn.run_query(fn.selectDB('creditcards'))
+        db_rows = fn.run_query(fn.selectDB('creditcards', 'DESC'))
 
         for row in db_rows:
-            self.tree.insert('', 0, text = row[0], values = row[1:])
+            id = row[0]
+            name = row[1]
+            deadline = row[2]
+            duedate = row[3]
+            balance = fn.format_currency(row[4])
+
+            xRow = [id, name, deadline, duedate,balance]
+            self.tree.insert('', 0, text = xRow[0], values = xRow[1:])
 
     def update_cards(self):
         iid = self.item('id')

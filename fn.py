@@ -8,14 +8,6 @@ def run_query(query, parameters = ()):
 		conn.commit()
 	return result
 
-def get_colDB(table):
-	with sqlite3.connect('dbase') as conn:
-		cursor = conn.cursor()
-		query = selectDB(table)
-		cursor.execute(query)
-		col = cursor.fetchall()
-		return col
-
 def validateDate(date):
 	i = 0
 	for c in date:
@@ -37,8 +29,8 @@ def validateDate(date):
 	
 	return False
 
-def selectDB(table):
-	query = 'SELECT * FROM ' + table + ' ORDER BY id DESC'
+def selectDB(table, order):
+	query = 'SELECT * FROM ' + table + ' ORDER BY id ' + order
 	return query
 
 def insertDB(table, data):
@@ -58,3 +50,30 @@ def updateBD(table, id, col = []):
 	query = 'UPDATE ' + table + ' SET ' + cc[:-2] + ' WHERE id = ?'
 	
 	return query
+
+def get_name(table, id):
+	query = 'SELECT name FROM ' + table + ' WHERE id = ?'
+	db_rows = run_query(query, (id, ))
+	
+	for row in db_rows:
+		return row[0]
+
+def get_id(table, name):
+	query = 'SELECT id FROM ' + table + ' WHERE name = ?'
+	db_rows = run_query(query, (name, ))
+
+	for row in db_rows:
+		return row[0]
+
+def get_names(table):
+	query = 'SELECT name FROM ' + table
+	db_rows = run_query(query)
+	db_list = []
+	for row in db_rows:
+		db_list.append(row[0])
+
+	return db_list
+
+def format_currency(num):
+	curr = '$ ' + str(num)
+	return curr

@@ -14,7 +14,7 @@ class addBankAcount(tk.Frame):
         frame = tk.LabelFrame(self.master)
         frame.place(x = 10, y = 10)
 
-        tk.Label(frame, text = 'Nombre').grid(row = 0, column = 0, padx = 5, pady = 5, sticky = 'w')
+        tk.Label(frame, text = 'Número').grid(row = 0, column = 0, padx = 5, pady = 5, sticky = 'w')
         self.name = tk.Entry(frame, width = 23)
         self.name.grid(row = 0, column = 1, padx = 5, pady = 5, sticky = 'w')
         tk.Label(frame, text = 'Tipo').grid(row = 1, column = 0, padx = 5, pady = 5, sticky = 'w')
