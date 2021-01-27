@@ -8,7 +8,7 @@ class CreditCards(tk.Frame):
         super().__init__(master)
         self.master = master
         self.master.title('Listado de tarjetas de crédito')
-        self.master.geometry('565x320')
+        self.master.geometry('565x350')
         self.master.config(bg = '#34378b')
 
         #Frame para visualizar los datos de las tarjetas de crédito
@@ -17,7 +17,7 @@ class CreditCards(tk.Frame):
 
         #Creación del treeview y configuración de aspecto
         self.tree = ttk.Treeview(frame, height = 5, columns = ('#1','#2','#3','#4'))
-        self.tree.grid(row = 0, column = 0, padx = 10, pady = 10, columnspan = 2, sticky = 'ew')
+        self.tree.grid(row = 0, column = 0, padx = 10, pady = 10, columnspan = 4, sticky = 'ew')
 
         self.tree.column('#0', width = 50)
         self.tree.heading('#0', text = 'ID')
@@ -33,9 +33,13 @@ class CreditCards(tk.Frame):
         #Al seleccionar una fila del treeview se dispara una función
         self.tree.bind('<<TreeviewSelect>>', self.selectedItem)
 
+        tk.Label(frame, text = 'Total').grid(row = 1, column = 2, pady = 5, sticky = 'e')
+        self.total = tk.Entry(frame, width = 15, justify = tk.CENTER)
+        self.total.grid(row = 1, column = 3, padx = 8, pady = 5, sticky = 'e')
+
         #Creación del frame para la edición del item seleccionado
         frame_edit = tk.LabelFrame(self.master, bg = '#34378b', fg = '#ffffff')
-        frame_edit.place(x = 10, y = 180)
+        frame_edit.place(x = 10, y = 210)
 
         tk.Label(frame_edit, text = 'Nombre', width = 10, bg = '#34378b', fg = '#ffffff').grid(row = 0, column = 0, padx = 5, pady = 5)
         self.name = tk.Entry(frame_edit, width = 15, state = 'disable')
@@ -58,7 +62,7 @@ class CreditCards(tk.Frame):
         
         #Creación de frame para contener los botones
         frameBtn = tk.LabelFrame(self.master, bg = '#34378b', fg = '#ffffff')
-        frameBtn.place(x = 10, y = 260)
+        frameBtn.place(x = 10, y = 290)
 
         tk.Button(frameBtn, text = 'Agregar', width = 17, command = self.open_addcard, bg = '#359f79', activebackground = '#309070', fg = '#ffffff').grid(row = 0, column = 0, padx = 8, pady = 5)
         tk.Button(frameBtn, text = 'Editar', width = 17, command = self.enable_edit, bg = '#359f79', activebackground = '#309070', fg = '#ffffff').grid(row = 0, column = 1, padx = 7, pady = 5)
@@ -74,25 +78,44 @@ class CreditCards(tk.Frame):
         
         db_rows = fn.run_query(fn.selectDB('creditcards', 'DESC'))
 
+        suma= 0
+
         for row in db_rows:
             id = row[0]
             name = row[1]
-            deadline = row[2]
-            duedate = row[3]
+            deadline = fn.format_date(row[2])
+            duedate = fn.format_date(row[3])
             balance = fn.format_currency(row[4])
+            suma += row[4]
 
             xRow = [id, name, deadline, duedate,balance]
             self.tree.insert('', 0, text = xRow[0], values = xRow[1:])
+        self.total.delete(0, tk.END)
+        total = '{:.2f}'.format(suma)
+        self.total.insert(0, fn.format_currency(total))
 
     def update_cards(self):
-        iid = self.item('id')
-        col = ['name', 'deadline', 'duedate', 'balance']
-        query = fn.updateBD('creditcards', iid, col)
-        parameters = (self.name.get(),self.deadline.get(),self.duedate.get(),self.balance.get(), iid)
-        fn.run_query(query, parameters)
+        if fn.validateDateFormat(self.deadline.get()) and fn.validateDateFormat(self.duedate.get()):
+            iid = self.item('id')
+            col = ['name', 'deadline', 'duedate', 'balance']
+            query = fn.updateBD('creditcards', iid, col)
+
+            name = self.name.get()
+            deadline = self.deadline.get()
+            duedate = self.duedate.get()
+            balance = self.balance.get()
+            
+            parameters = (name, deadline, duedate, balance, iid)
+            fn.run_query(query, parameters)
+            
+            
+            self.get_cCards()
+            # self.tree.selection_remove()
+            self.disable_edit()
+        else:
+            messagebox.showerror(title = 'formato invalido', message = 'La fecha debe tener el formato aaaa-mm-dd')
+
         
-        self.disable_edit()
-        self.get_cCards()
 
     def open_addcard(self):
         top_level = tk.Toplevel(self)
@@ -104,21 +127,27 @@ class CreditCards(tk.Frame):
 
     
     def selectedItem(self, event = None):
-        lsItem = self.item('value')
+        lsItem = self.tree.item(self.tree.selection())['values']
 
-        self.enable_edit()
+        if lsItem != '':
+            self.enable_edit()
 
-        self.name.delete(0, tk.END)
-        self.deadline.delete(0, tk.END)
-        self.duedate.delete(0, tk.END)
-        self.balance.delete(0, tk.END)
+            self.name.delete(0, tk.END)
+            self.deadline.delete(0, tk.END)
+            self.duedate.delete(0, tk.END)
+            self.balance.delete(0, tk.END)
 
-        self.name.insert(0, lsItem[0])
-        self.deadline.insert(0, lsItem[1])
-        self.duedate.insert(0, lsItem[2])
-        self.balance.insert(0, lsItem[3])
+            name = lsItem[0]
+            deadline = fn.format_date_db(lsItem[1])
+            duedate = fn.format_date_db(lsItem[2])
+            balance = lsItem[3]
 
-        self.disable_edit()
+            self.name.insert(0, name)
+            self.deadline.insert(0, deadline)
+            self.duedate.insert(0, duedate)
+            self.balance.insert(0, balance)
+
+            self.disable_edit()
 
         
 
@@ -148,6 +177,7 @@ class CreditCards(tk.Frame):
         self.update.config(state = 'disable')
 
     def item(self, dataget):
+        #global selItem
         if dataget == 'id':
             selItems = self.tree.selection()
             if selItems:
@@ -158,8 +188,8 @@ class CreditCards(tk.Frame):
             selItems = self.tree.selection()
             if selItems:
                 selItem = selItems[0]
-            values = self.tree.item(selItem)['values']
-            return values
+            val = self.tree.item(selItem)['values']
+            return val
 
 
 

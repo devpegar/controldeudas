@@ -77,3 +77,39 @@ def get_names(table):
 def format_currency(num):
 	curr = '$ ' + str(num)
 	return curr
+
+def format_date(date):
+	if date != '':
+		a = date.split('-')
+		nDate = a[2] + '/' + a[1] + '/' + a[0]
+	return nDate
+
+def validateDateFormat(date):
+	i = 0
+	for c in date:
+		if c == '-':
+			i +=1
+	if i == 2:
+		try:
+			year = int(date[0:4])
+			month = int(date[5:7])
+			day = int(date[8:10])
+		except:
+			return False
+
+
+		if year > 1900 and year < 2100:
+			if month > 0 and month < 13:
+				if day > 0 and day < 32:
+					return True
+	
+	return False
+
+def format_date_db(date):
+	if date != '':
+		a = date.split('/')
+		newdate = a[2] + '-' + a[1] + '-' + a[0]
+	return newdate
+
+
+format_date_db('02/02/2021')

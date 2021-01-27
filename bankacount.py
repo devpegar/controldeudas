@@ -96,28 +96,13 @@ class BankAcount(tk.Frame):
             self.tree.insert('', 0, text = xRow[0], values = xRow[1:])
 
         total = '{:.2f}'.format(suma)
+        self.total.delete(0, tk.END)
         self.total.insert(0, fn.format_currency(total))
 
 
     def open_add_bank_acount(self):
         top_level = Toplevel(self)
         maba.addBankAcount(top_level)
-
-    def enable_edit(self):
-        if (self.tree.selection()):
-            self.number.config(state = 'normal')
-            self.cbu.config(state = 'normal')
-            self.balance.config(state = 'normal')
-            self.enable_btn()
-        else:
-            messagebox.showwarning(message = 'Debe seleccionar un item a editar', title = 'Advertencia')
-    
-    def disable_edit(self):
-        if (self.tree.selection()):
-            self.number.config(state = 'disable')
-            self.cbu.config(state = 'disable')
-            self.balance.config(state = 'disable')
-            self.disable_btn()
         
     def close_add_bank_acount(self):
         self.master.destroy()
@@ -126,11 +111,16 @@ class BankAcount(tk.Frame):
         iid = self.tree.item(self.tree.selection())['text']
         col = ['name', 'cbu', 'balance']
         query = fn.updateBD('bankacount', iid, col)
-        parameters = (self.number.get(), self.cbu.get(), self.balance.get(), iid)
+
+        num = self.number.get()
+        cbu = self.cbu.get()
+        balance = self.balance.get()
+
+        parameters = (num, cbu, balance, iid)
         fn.run_query(query, parameters)
 
-        self.disable_edit()
         self.get_bank_acount()
+        self.disable_edit()
         
 
     def copy_cbu(self, event):
@@ -159,34 +149,51 @@ class BankAcount(tk.Frame):
 
     def get_selected_item(self, event = None):
         ls_values = self.tree.item(self.tree.selection())['values']
-        i = 0
 
-        self.enable_edit()
+        if ls_values != '':
+            i = 0
 
-        self.number.delete(0, tk.END)
-        self.cbu.delete(0, tk.END)
-        self.balance.delete(0, tk.END)
+            self.enable_edit()
 
-        self.number.insert(0, ls_values[0])
+            self.number.delete(0, tk.END)
+            self.cbu.delete(0, tk.END)
+            self.balance.delete(0, tk.END)
 
-        for t in self.type['values']:
-            if ls_values[1] == t:
-                self.type.current(i)
-                i = 0
-                break
-            i += 1
+            self.number.insert(0, ls_values[0])
 
-        for b in self.bank['values']:
-            if ls_values[2] == b:
-                self.bank.current(i)
-                i = 0
-                break
-            i += 1
+            for t in self.type['values']:
+                if ls_values[1] == t:
+                    self.type.current(i)
+                    i = 0
+                    break
+                i += 1
 
-        self.cbu.insert(0, ls_values[3])
-        self.balance.insert(0, ls_values[4])
+            for b in self.bank['values']:
+                if ls_values[2] == b:
+                    self.bank.current(i)
+                    i = 0
+                    break
+                i += 1
 
-        self.disable_edit()
+            self.cbu.insert(0, ls_values[3])
+            self.balance.insert(0, ls_values[4])
+
+            self.disable_edit()
+    
+    def enable_edit(self):
+        if (self.tree.selection()):
+            self.number.config(state = 'normal')
+            self.cbu.config(state = 'normal')
+            self.balance.config(state = 'normal')
+            self.enable_btn()
+        else:
+            messagebox.showwarning(message = 'Debe seleccionar un item a editar', title = 'Advertencia')
+    
+    def disable_edit(self):
+        self.number.config(state = 'disable')
+        self.cbu.config(state = 'disable')
+        self.balance.config(state = 'disable')
+        self.disable_btn()
 
     def enable_btn(self):
         self.update.config(state = 'normal')
