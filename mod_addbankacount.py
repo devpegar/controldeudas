@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
 import fn as fn
-import bankacount as ba
+import mod_bankacount as ba
 
 class addBankAcount(tk.Frame):
     def __init__(self, master = None):

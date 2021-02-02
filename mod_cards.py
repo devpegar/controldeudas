@@ -1,14 +1,15 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
 import fn as fn
-import mod_addcard
+import mod_add_card as mac
+import mod_edit_card as mec
 
 class CreditCards(tk.Frame):
     def __init__(self, master = None):
         super().__init__(master)
         self.master = master
         self.master.title('Listado de tarjetas de crédito')
-        self.master.geometry('565x350')
+        self.master.geometry('565x270')
         self.master.config(bg = '#34378b')
 
         #Frame para visualizar los datos de las tarjetas de crédito
@@ -30,48 +31,22 @@ class CreditCards(tk.Frame):
         self.tree.column('#4', width = 100, anchor = 'e')
         self.tree.heading('#4', text = 'Total')
 
-        #Al seleccionar una fila del treeview se dispara una función
-        self.tree.bind('<<TreeviewSelect>>', self.selectedItem)
-
         tk.Label(frame, text = 'Total').grid(row = 1, column = 2, pady = 5, sticky = 'e')
         self.total = tk.Entry(frame, width = 15, justify = tk.CENTER)
         self.total.grid(row = 1, column = 3, padx = 8, pady = 5, sticky = 'e')
-
-        #Creación del frame para la edición del item seleccionado
-        frame_edit = tk.LabelFrame(self.master, bg = '#34378b', fg = '#ffffff')
-        frame_edit.place(x = 10, y = 210)
-
-        tk.Label(frame_edit, text = 'Nombre', width = 10, bg = '#34378b', fg = '#ffffff').grid(row = 0, column = 0, padx = 5, pady = 5)
-        self.name = tk.Entry(frame_edit, width = 15, state = 'disable')
-        self.name.grid(row = 0, column = 1, padx = 5, pady = 5)
-        
-        tk.Label(frame_edit, text = 'Cierre', width = 10, bg = '#34378b', fg = '#ffffff').grid(row = 0, column = 2, padx = 5, pady = 5)
-        self.deadline = tk.Entry(frame_edit, width = 10, state = 'disable')
-        self.deadline.grid(row = 0, column = 3, padx = 5, pady = 5)
-
-        self.update = tk.Button(frame_edit, text = 'Actualizar', width = 10, state = 'disable', command = self.update_cards, bg = '#359f79', activebackground = '#309070', fg = '#ffffff')
-        self.update.grid(row = 0, column = 4, padx = 5, pady = 5, rowspan = 2, sticky = 'ns')
-
-        tk.Label(frame_edit, text = 'Vencimiento', width = 10, bg = '#34378b', fg = '#ffffff').grid(row = 1, column = 0, padx = 5, pady = 5)
-        self.duedate = tk.Entry(frame_edit, width = 10, state = 'disable')
-        self.duedate.grid(row = 1, column = 1, padx = 5, pady = 5, sticky = 'ew')
-
-        tk.Label(frame_edit, text = 'Total', width = 10, bg = '#34378b', fg = '#ffffff').grid(row = 1, column = 2, padx = 5, pady = 5)
-        self.balance = tk.Entry(frame_edit, width = 10, state = 'disable')
-        self.balance.grid(row = 1, column = 3, padx = 5, pady = 5)
         
         #Creación de frame para contener los botones
         frameBtn = tk.LabelFrame(self.master, bg = '#34378b', fg = '#ffffff')
-        frameBtn.place(x = 10, y = 290)
+        frameBtn.place(x = 10, y = 210)
 
-        tk.Button(frameBtn, text = 'Agregar', width = 17, command = self.open_addcard, bg = '#359f79', activebackground = '#309070', fg = '#ffffff').grid(row = 0, column = 0, padx = 8, pady = 5)
-        tk.Button(frameBtn, text = 'Editar', width = 17, command = self.enable_edit, bg = '#359f79', activebackground = '#309070', fg = '#ffffff').grid(row = 0, column = 1, padx = 7, pady = 5)
+        tk.Button(frameBtn, text = 'Agregar', width = 17, command = self.open_add_card, bg = '#359f79', activebackground = '#309070', fg = '#ffffff').grid(row = 0, column = 0, padx = 8, pady = 5)
+        tk.Button(frameBtn, text = 'Editar', width = 17, command = self.open_edit_card, bg = '#359f79', activebackground = '#309070', fg = '#ffffff').grid(row = 0, column = 1, padx = 7, pady = 5)
         tk.Button(frameBtn, text = 'Cerrar', width = 17, command = self.close_cards, bg = '#359f79', activebackground = '#309070', fg = '#ffffff').grid(row = 0, column = 2, padx = 8, pady = 5)
 
-        self.get_cCards()
+        self.get_cards()
 
     #relleno los datos del treeview desde base de datos
-    def get_cCards(self):
+    def get_cards(self):
         records = self.tree.get_children()
         for elements in records:
             self.tree.delete(elements)
@@ -98,7 +73,7 @@ class CreditCards(tk.Frame):
         if fn.validateDateFormat(self.deadline.get()) and fn.validateDateFormat(self.duedate.get()):
             iid = self.item('id')
             col = ['name', 'deadline', 'duedate', 'balance']
-            query = fn.updateBD('creditcards', iid, col)
+            query = fn.updateBD('creditcards', col)
 
             name = self.name.get()
             deadline = self.deadline.get()
@@ -109,7 +84,7 @@ class CreditCards(tk.Frame):
             fn.run_query(query, parameters)
             
             
-            self.get_cCards()
+            self.get_cards()
             # self.tree.selection_remove()
             self.disable_edit()
         else:
@@ -117,82 +92,44 @@ class CreditCards(tk.Frame):
 
         
 
-    def open_addcard(self):
+    def open_add_card(self):
         top_level = tk.Toplevel(self)
-        mod_addcard.AddCard(top_level)
+        mac.AddCard(top_level)
+        self.wait_window(top_level)
+        self.get_cards()
 
+    def open_edit_card(self):
+        lsitem = self.tree.item(self.tree.selection())['values']
+
+        if lsitem != '':
+            top_level = Toplevel(self)
+            i = 0
+            name = lsitem[0]
+            deadline = fn.format_date_db(lsitem[1])
+            duedate = fn.format_date_db(lsitem[2])
+            balance = lsitem[3]
+
+            send = mec.EditCards(top_level)
+            send.name.insert(0, name)
+            send.deadline.insert(0, deadline)
+            send.duedate.insert(0, duedate)
+            send.balance.insert(0, balance)
+            self.wait_window(top_level)
+            self.get_cards()
+        else:
+            self.message()
 
     def close_cards(self):
         self.master.destroy()
 
-    
-    def selectedItem(self, event = None):
-        lsItem = self.tree.item(self.tree.selection())['values']
-
-        if lsItem != '':
-            self.enable_edit()
-
-            self.name.delete(0, tk.END)
-            self.deadline.delete(0, tk.END)
-            self.duedate.delete(0, tk.END)
-            self.balance.delete(0, tk.END)
-
-            name = lsItem[0]
-            deadline = fn.format_date_db(lsItem[1])
-            duedate = fn.format_date_db(lsItem[2])
-            balance = lsItem[3]
-
-            self.name.insert(0, name)
-            self.deadline.insert(0, deadline)
-            self.duedate.insert(0, duedate)
-            self.balance.insert(0, balance)
-
-            self.disable_edit()
-
-        
-
-
-    def enable_edit(self):
-        if (self.tree.selection()):
-            self.name.config(state = 'normal')
-            self.deadline.config(state = 'normal')
-            self.duedate.config(state = 'normal')
-            self.balance.config(state = 'normal')
-            self.enable_btn()
-        else:
-            messagebox.showwarning(message = 'Debe seleccionar un item a editar', title = 'Advertencia')
-
-    def disable_edit(self):
-        self.name.config(state = 'disable')
-        self.deadline.config(state = 'disable')
-        self.duedate.config(state = 'disable')
-        self.balance.config(state = 'disable')
-
-        self.disable_btn()
-
-    def enable_btn(self):
-        self.update.config(state = 'normal')
-
-    def disable_btn(self):
-        self.update.config(state = 'disable')
-
-    def item(self, dataget):
-        #global selItem
-        if dataget == 'id':
-            selItems = self.tree.selection()
-            if selItems:
-                selItem = selItems[0]
-            iid = self.tree.item(selItem)['text']
-            return iid
-        elif dataget == 'value':
-            selItems = self.tree.selection()
-            if selItems:
-                selItem = selItems[0]
-            val = self.tree.item(selItem)['values']
-            return val
-
-
-
+    def message(self):
+        msg = Toplevel(self)
+        msg.geometry('300x100')
+        msg.title('Error')
+        msg.config(bg = '#34378b')
+        label = tk.Label(msg, text = 'Debe seleccionar un item para editar', bg = '#34378b', fg = '#ffffff')
+        label.grid(row = 0, column = 0, padx = 5, pady = 5, sticky = 'ew')
+        tk.Button(msg, text = 'Cerrar', command = msg.destroy).grid(row = 1, column = 0, padx = 5, pady = 5, sticky = 'ew')
 
 if __name__ == "__main__":
     root = tk.Tk()

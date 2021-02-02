@@ -41,7 +41,7 @@ def insertDB(table, data):
 	query = 'INSERT INTO ' + table + ' VALUES (NULL' + qq + ')'
 	return query
 
-def updateBD(table, id, col = []):
+def updateBD(table, col = []):
 	cc = ''
 	ii = 0
 	for c in col:
